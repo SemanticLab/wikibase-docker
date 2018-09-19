@@ -17,3 +17,4 @@ ${DOLLAR}wgCirrusSearchExtraIndexSettings['index.mapping.total_fields.limit'] = 
 
 ${DOLLAR}wgGroupPermissions['*']['createaccount'] = false;
 ${DOLLAR}wgGroupPermissions['*']['createaccount'] = false;
+${DOLLAR}wgGroupPermissions['*']['edit'] = false;
