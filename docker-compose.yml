@@ -1,8 +1,6 @@
 # Wikibase with Query Service
 #
-# This docker-compose example can be used to pull the images from docker hub.
-#
-# Examples:
+# This docker-compose example can be used to build and run the images.
 #
 # Access Wikibase via "http://localhost:8181"
 #   (or "http://$(docker-machine ip):8181" if using docker-machine)
@@ -14,10 +12,12 @@ version: '3'
 services:
   wikibase:
     image: wikibase/wikibase:1.30-bundle
+    build:
+      context: ./wikibase/1.30/bundle
+      dockerfile: Dockerfile
     links:
       - mysql
     ports:
-    # CONFIG - Change the 8181 here to expose Wikibase & MediaWiki on a different port
      - "8181:80"
     volumes:
       - mediawiki-images-data:/var/www/html/images
@@ -28,38 +28,36 @@ services:
       default:
         aliases:
          - wikibase.svc
-         # CONFIG - Add your real wikibase hostname here, for example wikibase-registry.wmflabs.org
     environment:
       - DB_SERVER=mysql.svc:3306
-      - MW_ELASTIC_HOST=elasticsearch.svc
-      - MW_ELASTIC_PORT=9200
-      # CONFIG - Change the default values below
-      - MW_ADMIN_NAME=admin
-      - MW_ADMIN_PASS=adminpass
-      - MW_WG_SECRET_KEY=secretkey
-      # CONFIG - Change the default values below (should match mysql values in this file)
       - DB_USER=wikiuser
       - DB_PASS=sqlpass
       - DB_NAME=my_wiki
+      - MW_ADMIN_NAME=admin
+      - MW_ADMIN_PASS=adminpass
+      - MW_WG_SECRET_KEY=secretkey
+      - MW_ELASTIC_HOST=elasticsearch.svc
+      - MW_ELASTIC_PORT=9200
+      - MW_SITE_NAME=Semlab
   mysql:
-    image: mariadb:10.3
-    restart: always
+    image: mariadb:latest
     volumes:
       - mediawiki-mysql-data:/var/lib/mysql
     environment:
-      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
-      # CONFIG - Change the default values below (should match values passed to wikibase)
       MYSQL_DATABASE: 'my_wiki'
       MYSQL_USER: 'wikiuser'
       MYSQL_PASSWORD: 'sqlpass'
+      MYSQL_RANDOM_ROOT_PASSWORD: 'yes'
     networks:
       default:
         aliases:
          - mysql.svc
   wdqs-frontend:
     image: wikibase/wdqs-frontend:latest
+    build:
+      context: ./wdqs-frontend/latest
+      dockerfile: Dockerfile
     ports:
-    # CONFIG - Change the 8282 here to expose the Query Service UI on a different port
      - "8282:80"
     depends_on:
     - wdqs-proxy
@@ -72,6 +70,10 @@ services:
       - WDQS_HOST=wdqs-proxy.svc
   wdqs:
     image: wikibase/wdqs:0.3.0
+    restart: always
+    build:
+      context: ./wdqs/0.3.0
+      dockerfile: Dockerfile
     volumes:
       - query-service-data:/wdqs/data
     command: /runBlazegraph.sh
@@ -87,6 +89,9 @@ services:
       - 9999
   wdqs-proxy:
     image: wikibase/wdqs-proxy
+    build:
+      context: ./wdqs-proxy/latest
+      dockerfile: Dockerfile
     environment:
       - PROXY_PASS_HOST=wdqs.svc:9999
     ports:
@@ -99,6 +104,9 @@ services:
          - wdqs-proxy.svc
   wdqs-updater:
     image: wikibase/wdqs:0.3.0
+    build:
+      context: ./wdqs/0.3.0
+      dockerfile: Dockerfile
     command: /runUpdate.sh
     depends_on:
     - wdqs
@@ -119,9 +127,11 @@ services:
          - elasticsearch.svc
     environment:
       discovery.type: single-node
-  # CONFING, in order to not load quickstatements then remove this entire section
   quickstatements:
     image: wikibase/quickstatements:latest
+    build:
+      context: ./quickstatements/latest
+      dockerfile: Dockerfile
     ports:
      - "9191:80"
     depends_on:
@@ -131,7 +141,6 @@ services:
         aliases:
          - quickstatements.svc
     environment:
-      # CONFIG, you have to config this if you want quickstatements
       - OAUTH_CONSUMER_KEY=559fcf1da153c5ec4b2fbefa7c3c395b
       - OAUTH_CONSUMER_SECRET=57cad33da0015dce1e94a597908e19848714a6af
       - QS_PUBLIC_SCHEME_HOST_AND_PORT=http://localhost:9191

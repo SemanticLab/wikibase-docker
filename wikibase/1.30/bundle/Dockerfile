@@ -28,6 +28,10 @@ COPY --from=composer /Elastica /var/www/html/extensions/Elastica
 COPY --from=fetcher /CirrusSearch /var/www/html/extensions/CirrusSearch
 COPY --from=composer /WikibaseImport /var/www/html/extensions/WikibaseImport
 COPY LocalSettings.php.wikibase-bundle.template /LocalSettings.php.wikibase-bundle.template
+
+COPY logo_135x135.png /var/www/html/resources/assets/wiki.png
+
+
 COPY extra-install.sh /
 COPY extra-entrypoint-run-first.sh /
 RUN cat /LocalSettings.php.wikibase-bundle.template >> /LocalSettings.php.template && rm /LocalSettings.php.wikibase-bundle.template
